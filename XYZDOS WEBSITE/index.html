@@ -1,0 +1,2032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XYZDOS — Infrastructure Testing Suite</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+
+:root{
+  --accent:#B06CFF;
+  --accent-dim:#7B3FCC;
+  --accent-glow:rgba(176,108,255,.5);
+  --accent-subtle:rgba(176,108,255,.12);
+  --bg-deep:#07070d;
+  --bg-surface:#0d0d18;
+  --bg-card:rgba(18,18,30,.85);
+  --bg-elevated:#12121e;
+  --border-glow:rgba(176,108,255,.25);
+  --border-subtle:rgba(176,108,255,.08);
+  --text-primary:#e8e6f0;
+  --text-dim:#7a7a8a;
+  --text-bright:#ffffff;
+  --gradient-1:linear-gradient(135deg,#B06CFF,#6C3BFF);
+  --gradient-2:linear-gradient(135deg,#B06CFF,#FF3B5C);
+  --gradient-3:linear-gradient(135deg,#00d4ff,#B06CFF);
+  --red:#FF3B5C;
+  --green:#00e050;
+  --gold:#C7A440;
+  --font-display:'Inter',system-ui,-apple-system,sans-serif;
+  --font-mono:'JetBrains Mono','Consolas','Courier New',monospace;
+}
+
+body{
+  background:var(--bg-deep);
+  color:var(--text-primary);
+  font-family:var(--font-display);
+  min-height:100vh;
+  overflow-x:hidden;
+  line-height:1.6;
+}
+
+/* Animated background */
+.bg-grid{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:0;
+  background-image:
+    linear-gradient(rgba(176,108,255,.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(176,108,255,.04) 1px,transparent 1px);
+  background-size:60px 60px;
+}
+
+.bg-glow{
+  position:fixed;
+  top:-30%;
+  left:-10%;
+  width:60%;
+  height:80%;
+  background:radial-gradient(ellipse at center,rgba(176,108,255,.08),transparent 70%);
+  pointer-events:none;
+  z-index:0;
+  animation:bgPulse 6s ease-in-out infinite alternate;
+}
+
+.bg-glow-2{
+  position:fixed;
+  bottom:-20%;
+  right:-10%;
+  width:50%;
+  height:60%;
+  background:radial-gradient(ellipse at center,rgba(255,59,92,.05),transparent 70%);
+  pointer-events:none;
+  z-index:0;
+  animation:bgPulse2 8s ease-in-out infinite alternate;
+}
+
+@keyframes bgPulse{
+  0%{opacity:.6;transform:translate(0,0) scale(1)}
+  100%{opacity:1;transform:translate(5%,5%) scale(1.1)}
+}
+
+@keyframes bgPulse2{
+  0%{opacity:.4;transform:translate(0,0) scale(1)}
+  100%{opacity:1;transform:translate(-5%,-5%) scale(1.15)}
+}
+
+/* Particles canvas */
+#particlesCanvas{
+  position:fixed;
+  inset:0;
+  z-index:1;
+  pointer-events:none;
+}
+
+/* Scanlines */
+.scanlines{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:2;
+  background:repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,.03) 2px,
+    rgba(0,0,0,.03) 4px
+  );
+}
+
+/* Navigation */
+nav{
+  position:fixed;
+  top:0;
+  left:0;
+  right:0;
+  z-index:100;
+  padding:16px 40px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:rgba(7,7,13,.6);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(176,108,255,.06);
+  transition:all .3s;
+}
+
+nav.scrolled{
+  background:rgba(7,7,13,.92);
+  border-bottom-color:rgba(176,108,255,.12);
+}
+
+.nav-logo{
+  font-family:var(--font-mono);
+  font-size:14px;
+  font-weight:700;
+  letter-spacing:4px;
+  color:var(--accent);
+  text-shadow:0 0 20px rgba(176,108,255,.3);
+  text-transform:uppercase;
+  text-decoration:none;
+}
+
+.nav-logo span{
+  color:var(--text-dim);
+  font-weight:400;
+  letter-spacing:2px;
+}
+
+.nav-links{
+  display:flex;
+  gap:32px;
+  align-items:center;
+  list-style:none;
+}
+
+.nav-links a{
+  font-family:var(--font-mono);
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:2px;
+  color:var(--text-dim);
+  text-decoration:none;
+  text-transform:uppercase;
+  transition:color .25s;
+  position:relative;
+}
+
+.nav-links a::after{
+  content:'';
+  position:absolute;
+  bottom:-4px;
+  left:0;
+  width:0;
+  height:1.5px;
+  background:var(--gradient-1);
+  transition:width .25s;
+}
+
+.nav-links a:hover{
+  color:var(--text-bright);
+}
+
+.nav-links a:hover::after{
+  width:100%;
+}
+
+.nav-cta{
+  padding:8px 20px;
+  background:var(--gradient-1);
+  border-radius:4px;
+  font-family:var(--font-mono);
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:2px;
+  color:#fff !important;
+  text-decoration:none;
+  text-transform:uppercase;
+  transition:all .3s !important;
+}
+
+.nav-cta::after{display:none !important}
+.nav-cta:hover{
+  transform:translateY(-1px);
+  box-shadow:0 0 24px rgba(176,108,255,.4) !important;
+}
+
+/* Hero */
+.hero{
+  position:relative;
+  z-index:3;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:120px 24px 80px;
+}
+
+.hero-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 16px;
+  background:var(--accent-subtle);
+  border:1px solid rgba(176,108,255,.2);
+  border-radius:100px;
+  font-family:var(--font-mono);
+  font-size:10px;
+  font-weight:600;
+  letter-spacing:2px;
+  color:var(--accent);
+  text-transform:uppercase;
+  margin-bottom:32px;
+  animation:fadeInUp .8s ease-out;
+}
+
+.hero-badge .dot{
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:var(--green);
+  box-shadow:0 0 8px rgba(0,224,80,.5);
+  animation:dotPulse 2s ease-in-out infinite;
+}
+
+@keyframes dotPulse{
+  0%,100%{opacity:1;transform:scale(1)}
+  50%{opacity:.5;transform:scale(.7)}
+}
+
+.hero h1{
+  font-size:clamp(42px,8vw,96px);
+  font-weight:900;
+  letter-spacing:-3px;
+  line-height:1.05;
+  margin-bottom:24px;
+  animation:fadeInUp .8s ease-out .1s both;
+}
+
+.hero h1 .gradient-text{
+  background:var(--gradient-2);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+
+.hero h1 .gradient-text-2{
+  background:var(--gradient-3);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+
+.hero-subtitle{
+  font-size:clamp(16px,2vw,20px);
+  color:var(--text-dim);
+  max-width:640px;
+  margin-bottom:40px;
+  line-height:1.7;
+  animation:fadeInUp .8s ease-out .2s both;
+}
+
+.hero-subtitle strong{
+  color:var(--text-primary);
+  font-weight:600;
+}
+
+.hero-actions{
+  display:flex;
+  gap:16px;
+  flex-wrap:wrap;
+  justify-content:center;
+  animation:fadeInUp .8s ease-out .3s both;
+}
+
+.btn-primary{
+  padding:14px 36px;
+  background:var(--gradient-1);
+  border:none;
+  border-radius:6px;
+  font-family:var(--font-mono);
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:3px;
+  color:#fff;
+  cursor:pointer;
+  text-transform:uppercase;
+  text-decoration:none;
+  transition:all .3s;
+  position:relative;
+  overflow:hidden;
+}
+
+.btn-primary:hover{
+  transform:translateY(-2px);
+  box-shadow:0 0 32px rgba(176,108,255,.4);
+}
+
+.btn-secondary{
+  padding:14px 36px;
+  background:transparent;
+  border:1px solid var(--border-glow);
+  border-radius:6px;
+  font-family:var(--font-mono);
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:3px;
+  color:var(--text-primary);
+  cursor:pointer;
+  text-transform:uppercase;
+  text-decoration:none;
+  transition:all .3s;
+}
+
+.btn-secondary:hover{
+  background:var(--accent-subtle);
+  border-color:var(--accent);
+  transform:translateY(-2px);
+}
+
+.hero-stats{
+  display:flex;
+  gap:48px;
+  margin-top:64px;
+  animation:fadeInUp .8s ease-out .4s both;
+}
+
+.hero-stat{
+  text-align:center;
+}
+
+.hero-stat-value{
+  font-family:var(--font-mono);
+  font-size:32px;
+  font-weight:700;
+  color:var(--text-bright);
+  line-height:1;
+}
+
+.hero-stat-value .accent{color:var(--accent)}
+.hero-stat-value .red{color:var(--red)}
+.hero-stat-value .green{color:var(--green)}
+
+.hero-stat-label{
+  font-family:var(--font-mono);
+  font-size:9px;
+  letter-spacing:2px;
+  color:var(--text-dim);
+  text-transform:uppercase;
+  margin-top:6px;
+}
+
+.hero-scroll{
+  position:absolute;
+  bottom:32px;
+  left:50%;
+  transform:translateX(-50%);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8px;
+  font-family:var(--font-mono);
+  font-size:9px;
+  letter-spacing:2px;
+  color:var(--text-dim);
+  text-transform:uppercase;
+  animation:fadeInUp .8s ease-out .6s both;
+}
+
+.scroll-arrow{
+  width:16px;
+  height:24px;
+  border:1.5px solid var(--text-dim);
+  border-radius:8px;
+  position:relative;
+  animation:scrollBounce 2s ease-in-out infinite;
+}
+
+.scroll-arrow::after{
+  content:'';
+  position:absolute;
+  top:4px;
+  left:50%;
+  transform:translateX(-50%);
+  width:2px;
+  height:6px;
+  background:var(--accent);
+  border-radius:1px;
+  animation:scrollDot 2s ease-in-out infinite;
+}
+
+@keyframes scrollBounce{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(4px)}
+}
+
+@keyframes scrollDot{
+  0%,100%{opacity:1;top:4px}
+  50%{opacity:.3;top:10px}
+}
+
+@keyframes fadeInUp{
+  from{opacity:0;transform:translateY(20px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* Sections */
+.section{
+  position:relative;
+  z-index:3;
+  padding:100px 24px;
+}
+
+.section-inner{
+  max-width:1100px;
+  margin:0 auto;
+}
+
+.section-label{
+  font-family:var(--font-mono);
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:3px;
+  color:var(--accent);
+  text-transform:uppercase;
+  margin-bottom:12px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.section-label::before{
+  content:'◆';
+  font-size:6px;
+}
+
+.section-title{
+  font-size:clamp(28px,4vw,44px);
+  font-weight:800;
+  letter-spacing:-1.5px;
+  line-height:1.15;
+  margin-bottom:20px;
+  color:var(--text-bright);
+}
+
+.section-desc{
+  font-size:17px;
+  color:var(--text-dim);
+  max-width:600px;
+  line-height:1.8;
+  margin-bottom:48px;
+}
+
+/* What is this? Section */
+.what-is{
+  text-align:center;
+  padding:80px 24px;
+}
+
+.what-is-box{
+  max-width:800px;
+  margin:0 auto;
+  background:var(--bg-card);
+  border:1px solid var(--border-subtle);
+  border-radius:12px;
+  padding:56px 48px;
+  position:relative;
+  overflow:hidden;
+}
+
+.what-is-box::before{
+  content:'';
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  height:1px;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent);
+}
+
+.what-is-box .riddle{
+  font-family:var(--font-mono);
+  font-size:clamp(18px,2.5vw,28px);
+  font-weight:700;
+  line-height:1.5;
+  letter-spacing:1px;
+  margin-bottom:28px;
+}
+
+.what-is-box .riddle .highlight-1{
+  color:var(--accent);
+  text-shadow:0 0 20px rgba(176,108,255,.3);
+}
+
+.what-is-box .riddle .highlight-2{
+  color:var(--red);
+  text-shadow:0 0 20px rgba(255,59,92,.3);
+}
+
+.what-is-box .riddle .highlight-3{
+  color:var(--gold);
+}
+
+.what-is-box .hint-line{
+  font-size:13px;
+  color:var(--text-dim);
+  line-height:1.8;
+  margin-bottom:6px;
+}
+
+.what-is-box .hint-line code{
+  background:rgba(176,108,255,.1);
+  padding:2px 8px;
+  border-radius:3px;
+  font-family:var(--font-mono);
+  font-size:12px;
+  color:var(--accent);
+}
+
+/* Features */
+.features-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:16px;
+}
+
+@media(max-width:768px){
+  .features-grid{
+    grid-template-columns:1fr;
+  }
+}
+
+.feature-card{
+  display:flex;
+  gap:18px;
+  background:var(--bg-card);
+  border:1px solid var(--border-subtle);
+  border-radius:8px;
+  padding:24px;
+  transition:all .3s;
+}
+
+.feature-card:hover{
+  border-color:var(--border-glow);
+  background:var(--bg-elevated);
+  transform:translateX(4px);
+}
+
+.feature-icon{
+  font-size:20px;
+  flex-shrink:0;
+  width:36px;
+  height:36px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:var(--accent-subtle);
+  border-radius:6px;
+}
+
+.feature-text h4{
+  font-family:var(--font-mono);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:1.5px;
+  color:var(--text-bright);
+  text-transform:uppercase;
+  margin-bottom:4px;
+}
+
+.feature-text p{
+  font-size:13px;
+  color:var(--text-dim);
+  line-height:1.6;
+}
+
+/* Testimonials / Social Proof */
+.social-proof{
+  background:var(--bg-card);
+  border:1px solid var(--border-subtle);
+  border-radius:10px;
+  padding:40px;
+  text-align:center;
+}
+
+.social-proof h3{
+  font-family:var(--font-mono);
+  font-size:11px;
+  letter-spacing:2px;
+  color:var(--text-dim);
+  text-transform:uppercase;
+  margin-bottom:24px;
+}
+
+.proof-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:24px;
+  margin-bottom:24px;
+}
+
+@media(max-width:768px){
+  .proof-grid{
+    grid-template-columns:1fr;
+  }
+}
+
+.proof-item{
+  padding:16px;
+  background:rgba(176,108,255,.03);
+  border-radius:6px;
+  border:1px solid rgba(176,108,255,.06);
+}
+
+.proof-item .quote{
+  font-family:var(--font-mono);
+  font-size:12px;
+  color:var(--text-dim);
+  line-height:1.7;
+  font-style:italic;
+}
+
+.proof-item .author{
+  font-family:var(--font-mono);
+  font-size:9px;
+  letter-spacing:1px;
+  color:var(--accent);
+  margin-top:10px;
+}
+
+/* Pricing Section */
+#pricing{
+  scroll-margin-top:80px;
+}
+
+.pricing-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:24px;
+  max-width:860px;
+  margin:0 auto;
+}
+
+@media(max-width:800px){
+  .pricing-grid{
+    grid-template-columns:1fr;
+    max-width:450px;
+  }
+}
+
+.pricing-card{
+  background:var(--bg-card);
+  border:1px solid var(--border-subtle);
+  border-radius:12px;
+  padding:40px 32px;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+  transition:all .35s;
+}
+
+.pricing-card:hover{
+  transform:translateY(-6px);
+  box-shadow:0 20px 60px rgba(176,108,255,.15);
+  border-color:var(--border-glow);
+}
+
+.pricing-card.featured{
+  border-color:var(--accent);
+  background:linear-gradient(180deg,rgba(176,108,255,.06),var(--bg-card));
+  z-index:2;
+}
+
+.pricing-card.featured:hover{
+  border-color:var(--accent);
+  box-shadow:0 20px 60px rgba(176,108,255,.2);
+}
+
+.pricing-card.featured::after{
+  content:'BEST VALUE';
+  position:absolute;
+  top:14px;
+  right:-32px;
+  background:var(--gradient-1);
+  padding:4px 40px;
+  font-family:var(--font-mono);
+  font-size:8px;
+  font-weight:700;
+  letter-spacing:1px;
+  color:#fff;
+  transform:rotate(45deg);
+}
+
+.pricing-tier{
+  font-family:var(--font-mono);
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:3px;
+  color:var(--accent);
+  text-transform:uppercase;
+  margin-bottom:4px;
+}
+
+.pricing-name{
+  font-size:28px;
+  font-weight:800;
+  color:var(--text-bright);
+  margin-bottom:16px;
+  letter-spacing:-1px;
+}
+
+.pricing-divider{
+  height:1px;
+  background:var(--border-subtle);
+  margin:16px 0;
+}
+
+.pricing-features{
+  list-style:none;
+  text-align:left;
+  padding:0;
+  margin-bottom:20px;
+}
+
+.pricing-features li{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:7px 0;
+  font-size:13px;
+  color:var(--text-dim);
+  border-bottom:1px solid rgba(176,108,255,.04);
+}
+
+.pricing-features li:last-child{
+  border-bottom:none;
+}
+
+.pricing-features li .check{
+  color:var(--green);
+  font-weight:700;
+  flex-shrink:0;
+}
+
+.pricing-features li .cross{
+  color:var(--red);
+  font-weight:700;
+  flex-shrink:0;
+}
+
+/* Duration options */
+.duration-options{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  margin-bottom:20px;
+}
+
+.duration-option{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:10px 14px;
+  background:rgba(176,108,255,.04);
+  border:1px solid rgba(176,108,255,.08);
+  border-radius:6px;
+  transition:all .25s;
+}
+
+.duration-option:hover{
+  background:rgba(176,108,255,.08);
+  border-color:var(--border-glow);
+}
+
+.duration-label{
+  font-family:var(--font-mono);
+  font-size:11px;
+  font-weight:600;
+  color:var(--text-primary);
+  letter-spacing:1px;
+  text-transform:uppercase;
+}
+
+.duration-price{
+  font-family:var(--font-mono);
+  font-size:13px;
+  font-weight:700;
+  color:var(--accent);
+  letter-spacing:1px;
+}
+
+.duration-price .small{
+  font-size:9px;
+  color:var(--text-dim);
+  font-weight:400;
+}
+
+.pricing-btn{
+  display:inline-block;
+  width:100%;
+  padding:14px 20px;
+  background:transparent;
+  border:1px solid var(--border-glow);
+  border-radius:6px;
+  font-family:var(--font-mono);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:2px;
+  color:var(--text-primary);
+  cursor:pointer;
+  text-transform:uppercase;
+  text-decoration:none;
+  transition:all .3s;
+}
+
+.pricing-btn:hover{
+  background:var(--accent-subtle);
+  border-color:var(--accent);
+  color:var(--accent);
+  transform:translateY(-1px);
+}
+
+.pricing-btn.featured-btn{
+  background:var(--gradient-1);
+  border-color:transparent;
+  color:#fff;
+}
+
+.pricing-btn.featured-btn:hover{
+  box-shadow:0 0 28px rgba(176,108,255,.35);
+  transform:translateY(-2px);
+  color:#fff;
+}
+
+.pricing-note{
+  margin-top:20px;
+  font-family:var(--font-mono);
+  font-size:10px;
+  color:var(--text-dim);
+  text-align:center;
+  letter-spacing:1px;
+}
+
+.pricing-note a{
+  color:var(--accent);
+  text-decoration:none;
+  border-bottom:1px dotted;
+}
+
+.pricing-note a:hover{
+  color:var(--text-bright);
+}
+
+/* Discord CTA */
+.discord-cta{
+  position:relative;
+  z-index:3;
+  text-align:center;
+  padding:80px 24px 120px;
+}
+
+.discord-box{
+  max-width:700px;
+  margin:0 auto;
+  background:var(--bg-card);
+  border:1px solid var(--border-subtle);
+  border-radius:12px;
+  padding:56px 48px;
+  position:relative;
+  overflow:hidden;
+}
+
+.discord-box::before{
+  content:'';
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(88,101,242,.6),transparent);
+}
+
+.discord-icon-lg{
+  width:56px;
+  height:56px;
+  margin-bottom:20px;
+  color:#5865F2;
+}
+
+.discord-box h2{
+  font-size:28px;
+  font-weight:800;
+  color:var(--text-bright);
+  letter-spacing:-1px;
+  margin-bottom:12px;
+}
+
+.discord-box p{
+  font-size:15px;
+  color:var(--text-dim);
+  margin-bottom:28px;
+  line-height:1.7;
+}
+
+.discord-btn{
+  display:inline-flex;
+  align-items:center;
+  gap:12px;
+  padding:16px 40px;
+  background:#5865F2;
+  border:none;
+  border-radius:6px;
+  font-family:var(--font-mono);
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:3px;
+  color:#fff;
+  cursor:pointer;
+  text-transform:uppercase;
+  text-decoration:none;
+  transition:all .3s;
+}
+
+.discord-btn:hover{
+  background:#4752C4;
+  transform:translateY(-2px);
+  box-shadow:0 0 32px rgba(88,101,242,.4);
+}
+
+/* Footer */
+footer{
+  position:relative;
+  z-index:3;
+  padding:40px 24px;
+  border-top:1px solid var(--border-subtle);
+  text-align:center;
+}
+
+.footer-inner{
+  max-width:1100px;
+  margin:0 auto;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:16px;
+}
+
+@media(max-width:600px){
+  .footer-inner{
+    flex-direction:column;
+    text-align:center;
+  }
+}
+
+.footer-logo{
+  font-family:var(--font-mono);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:3px;
+  color:var(--text-dim);
+  text-transform:uppercase;
+}
+
+.footer-links{
+  display:flex;
+  gap:24px;
+}
+
+.footer-links a{
+  font-family:var(--font-mono);
+  font-size:9px;
+  letter-spacing:1px;
+  color:var(--text-dim);
+  text-decoration:none;
+  text-transform:uppercase;
+  transition:color .2s;
+}
+
+.footer-links a:hover{
+  color:var(--accent);
+}
+
+.footer-copy{
+  font-family:var(--font-mono);
+  font-size:9px;
+  color:var(--text-dim);
+  opacity:.5;
+}
+
+/* Responsive nav */
+@media(max-width:768px){
+  nav{
+    padding:12px 20px;
+  }
+  .nav-links a:not(.nav-cta){
+    display:none;
+  }
+  .section-title{
+    font-size:28px;
+  }
+  .what-is-box{
+    padding:36px 24px;
+  }
+  .discord-box{
+    padding:36px 24px;
+  }
+}
+
+/* Fake terminal */
+.terminal-box{
+  background:#050508;
+  border:1px solid rgba(176,108,255,.12);
+  border-radius:8px;
+  overflow:hidden;
+  margin-top:40px;
+  max-width:600px;
+  margin-left:auto;
+  margin-right:auto;
+}
+
+.terminal-header{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 14px;
+  background:rgba(176,108,255,.04);
+  border-bottom:1px solid rgba(176,108,255,.08);
+}
+
+.terminal-dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+}
+
+.terminal-dot:nth-child(1){background:#FF5F56}
+.terminal-dot:nth-child(2){background:#FFBD2E}
+.terminal-dot:nth-child(3){background:#27C93F}
+
+.terminal-title{
+  font-family:var(--font-mono);
+  font-size:9px;
+  color:var(--text-dim);
+  margin-left:8px;
+  letter-spacing:1px;
+}
+
+.terminal-body{
+  padding:16px 18px;
+  font-family:var(--font-mono);
+  font-size:12px;
+  line-height:1.8;
+  color:var(--text-dim);
+  text-align:left;
+}
+
+.terminal-body .prompt{
+  color:var(--green);
+}
+
+.terminal-body .cmd{
+  color:var(--text-primary);
+}
+
+.terminal-body .output{
+  color:var(--accent);
+  padding-left:16px;
+}
+
+.terminal-body .cursor-line{
+  display:flex;
+  align-items:center;
+}
+
+.terminal-body .blink-cursor{
+  display:inline-block;
+  width:8px;
+  height:14px;
+  background:var(--accent);
+  margin-left:4px;
+  animation:blinkCaret 1s step-end infinite;
+}
+
+@keyframes blinkCaret{
+  50%{border-color:transparent}
+}
+
+/* How It Works */
+.steps-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:20px;
+  counter-reset:step;
+}
+
+@media(max-width:900px){
+  .steps-grid{
+    grid-template-columns:repeat(2,1fr);
+  }
+}
+
+@media(max-width:500px){
+  .steps-grid{
+    grid-template-columns:1fr;
+  }
+}
+
+.step-card{
+  background:var(--bg-card);
+  border:1px solid var(--border-subtle);
+  border-radius:10px;
+  padding:32px 24px;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+  transition:all .35s;
+  counter-increment:step;
+}
+
+.step-card:hover{
+  border-color:var(--border-glow);
+  transform:translateY(-4px);
+}
+
+.step-number{
+  font-family:var(--font-mono);
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:2px;
+  color:var(--accent);
+  margin-bottom:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+
+.step-number::before{
+  content:'0' counter(step);
+  font-size:28px;
+  font-weight:900;
+  background:var(--gradient-1);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  line-height:1;
+}
+
+.step-card h4{
+  font-family:var(--font-mono);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:1.5px;
+  color:var(--text-bright);
+  text-transform:uppercase;
+  margin-bottom:8px;
+}
+
+.step-card p{
+  font-size:13px;
+  color:var(--text-dim);
+  line-height:1.7;
+}
+
+.step-arrow{
+  position:absolute;
+  top:50%;
+  right:-16px;
+  transform:translateY(-50%);
+  font-size:18px;
+  color:var(--text-dim);
+  opacity:.2;
+  pointer-events:none;
+}
+
+@media(max-width:900px){
+  .step-arrow{
+    display:none;
+  }
+}
+
+/* FAQ */
+.faq-list{
+  max-width:760px;
+  margin:0 auto;
+}
+
+.faq-item{
+  background:var(--bg-card);
+  border:1px solid var(--border-subtle);
+  border-radius:8px;
+  margin-bottom:10px;
+  overflow:hidden;
+  transition:border-color .3s;
+}
+
+.faq-item:hover{
+  border-color:var(--border-glow);
+}
+
+.faq-item.open{
+  border-color:var(--border-glow);
+}
+
+.faq-question{
+  width:100%;
+  padding:18px 22px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:none;
+  border:none;
+  font-family:var(--font-mono);
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:1px;
+  color:var(--text-primary);
+  cursor:pointer;
+  text-align:left;
+  transition:color .2s;
+}
+
+.faq-question:hover{
+  color:var(--accent);
+}
+
+.faq-icon{
+  font-size:14px;
+  color:var(--accent);
+  transition:transform .3s;
+  flex-shrink:0;
+  margin-left:12px;
+}
+
+.faq-item.open .faq-icon{
+  transform:rotate(45deg);
+}
+
+.faq-answer{
+  max-height:0;
+  overflow:hidden;
+  transition:max-height .35s ease, padding .35s ease;
+  padding:0 22px;
+}
+
+.faq-item.open .faq-answer{
+  max-height:600px;
+  padding:0 22px 18px;
+}
+
+.faq-answer p{
+  font-size:13px;
+  color:var(--text-dim);
+  line-height:1.8;
+}
+
+.faq-answer code{
+  background:rgba(176,108,255,.1);
+  padding:1px 6px;
+  border-radius:3px;
+  font-family:var(--font-mono);
+  font-size:12px;
+  color:var(--accent);
+}
+
+.faq-cta{
+  text-align:center;
+  margin-top:28px;
+  font-family:var(--font-mono);
+  font-size:11px;
+  color:var(--text-dim);
+  letter-spacing:1px;
+}
+
+.faq-cta a{
+  color:var(--accent);
+  text-decoration:none;
+  border-bottom:1px dotted;
+}
+
+.faq-cta a:hover{
+  color:var(--text-bright);
+}
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+<div class="bg-glow-2"></div>
+<canvas id="particlesCanvas"></canvas>
+<div class="scanlines"></div>
+
+<!-- ADMIN LOGIN OVERLAY -->
+<div id="adminOverlay" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(5,5,10,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);align-items:center;justify-content:center">
+  <div style="background:var(--bg-card);border:1px solid var(--border-glow);border-radius:12px;padding:48px 40px;width:420px;max-width:90vw;position:relative;z-index:1;text-align:center">
+    <div style="font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin-bottom:4px">Admin Access</div>
+    <div style="font-size:24px;font-weight:800;color:var(--text-bright);margin-bottom:6px;letter-spacing:-1px">Control Panel</div>
+    <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);margin-bottom:24px;letter-spacing:1px">AUTHORIZED PERSONNEL ONLY</div>
+    <input type="text" id="adminUser" placeholder="Username" style="width:100%;padding:12px 14px;background:rgba(18,18,30,.8);border:1px solid var(--input-border,rgba(176,108,255,.28));border-radius:5px;font-family:var(--font-mono);font-size:14px;color:var(--text-bright);outline:none;margin-bottom:10px;text-align:center" autocomplete="off">
+    <input type="password" id="adminPass" placeholder="Password" style="width:100%;padding:12px 14px;background:rgba(18,18,30,.8);border:1px solid var(--input-border,rgba(176,108,255,.28));border-radius:5px;font-family:var(--font-mono);font-size:14px;color:var(--text-bright);outline:none;margin-bottom:14px;text-align:center" autocomplete="off">
+    <button id="adminLoginBtn" style="width:100%;padding:12px;background:var(--gradient-1);border:none;border-radius:5px;font-family:var(--font-mono);font-size:12px;font-weight:700;letter-spacing:2px;color:#fff;cursor:pointer;text-transform:uppercase;transition:all .3s" onmouseover="this.style.boxShadow='0 0 24px rgba(176,108,255,.4)'" onmouseout="this.style.boxShadow='none'">Authenticate</button>
+    <div id="adminError" style="font-family:var(--font-mono);font-size:10px;color:var(--red);margin-top:10px;min-height:16px;letter-spacing:1px"></div>
+    <button id="adminCloseBtn" style="margin-top:16px;background:none;border:none;font-family:var(--font-mono);font-size:9px;color:var(--text-dim);cursor:pointer;letter-spacing:1px;text-decoration:underline">Close</button>
+  </div>
+</div>
+
+<!-- ADMIN DASHBOARD -->
+<div id="adminDashboard" style="display:none;position:fixed;inset:0;z-index:99998;background:rgba(5,5,10,.95);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);overflow-y:auto">
+  <div style="max-width:1200px;margin:0 auto;padding:32px 24px">
+    <!-- Header -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:wrap;gap:12px">
+      <div>
+        <div style="font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:3px;color:var(--gold);text-transform:uppercase">Admin Dashboard</div>
+        <div style="font-size:24px;font-weight:800;color:var(--text-bright);letter-spacing:-1px">Visitor Logs</div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center">
+        <span id="adminStatVisits" style="font-family:var(--font-mono);font-size:11px;color:var(--text-dim);background:var(--bg-card);padding:8px 14px;border-radius:6px;border:1px solid var(--border-subtle)">Loading...</span>
+        <span id="adminStatUnique" style="font-family:var(--font-mono);font-size:11px;color:var(--text-dim);background:var(--bg-card);padding:8px 14px;border-radius:6px;border:1px solid var(--border-subtle)">Loading...</span>
+        <span id="adminStatToday" style="font-family:var(--font-mono);font-size:11px;color:var(--text-dim);background:var(--bg-card);padding:8px 14px;border-radius:6px;border:1px solid var(--border-subtle)">Loading...</span>
+        <button id="adminLogoutBtn" style="padding:8px 16px;background:rgba(255,59,92,.12);border:1px solid rgba(255,59,92,.25);border-radius:5px;font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:1px;color:var(--red);cursor:pointer;text-transform:uppercase">Logout</button>
+        <button id="adminDashCloseBtn" style="padding:8px 12px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-dim);cursor:pointer">✕</button>
+      </div>
+    </div>
+
+    <!-- Search -->
+    <div style="display:flex;gap:10px;margin-bottom:16px">
+      <input type="text" id="adminSearch" placeholder="Search by IP..." style="flex:1;padding:10px 14px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:5px;font-family:var(--font-mono);font-size:12px;color:var(--text-bright);outline:none" autocomplete="off">
+      <button id="adminSearchBtn" style="padding:10px 20px;background:var(--accent-subtle);border:1px solid var(--border-glow);border-radius:5px;font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:1px;color:var(--accent);cursor:pointer">Search</button>
+      <button id="adminRefreshBtn" style="padding:10px 16px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-dim);cursor:pointer">↻</button>
+    </div>
+
+    <!-- Table -->
+    <div style="background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:8px;overflow:hidden">
+      <table style="width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:11px">
+        <thead>
+          <tr style="background:rgba(176,108,255,.06);border-bottom:1px solid var(--border-subtle)">
+            <th style="padding:12px 14px;text-align:left;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;font-weight:700">#</th>
+            <th style="padding:12px 14px;text-align:left;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;font-weight:700">IP Address</th>
+            <th style="padding:12px 14px;text-align:left;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;font-weight:700">Time (UTC)</th>
+            <th style="padding:12px 14px;text-align:left;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;font-weight:700">User Agent</th>
+          </tr>
+        </thead>
+        <tbody id="adminLogBody">
+          <tr><td colspan="4" style="padding:40px;text-align:center;color:var(--text-dim)">Loading visitor data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div id="adminPagination" style="display:flex;justify-content:center;gap:8px;margin-top:16px;align-items:center"></div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav id="navbar">
+  <a href="#" class="nav-logo">XYZDOS <span>///</span></a>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#capabilities">Capabilities</a></li>
+    <li><a href="#how-it-works">How It Works</a></li>
+    <li><a href="#faq">FAQ</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="https://discord.gg/Ek6MpFvJsN" target="_blank" class="nav-cta">Get Access</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">
+    <span class="dot"></span>
+    v1.0.0 — Operational
+  </div>
+  <h1>
+    <span class="gradient-text">Silence</span><br>
+    <span class="gradient-text-2">The Servers</span><br>
+    <span style="font-size:0.6em;letter-spacing:4px;display:block;margin-top:8px">OWN THE NETWORK</span>
+  </h1>
+  <p class="hero-subtitle">
+    <strong>Silence the servers.</strong> <strong>Own the network.</strong><br>
+    High-density packet egress platform. Targeted stress. Total control.<br>
+
+  </p>
+  <div class="hero-actions">
+    <a href="#pricing" class="btn-primary">View Pricing</a>
+    <a href="#about" class="btn-secondary">Learn More</a>
+  </div>
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <div class="hero-stat-value"><span class="accent">65K</span></div>
+      <div class="hero-stat-label">Ports / Cycle</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-value"><span class="green">50</span> <span style="font-size:14px;color:var(--text-dim)">GB/s</span></div>
+      <div class="hero-stat-label">Peak Throughput</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-value"><span class="red">6</span> <span style="font-size:14px;color:var(--text-dim)">workers</span></div>
+      <div class="hero-stat-label">Parallel Engines</div>
+    </div>
+  </div>
+  <div class="hero-scroll">
+    <span>Scroll</span>
+    <div class="scroll-arrow"></div>
+  </div>
+</section>
+
+<!-- WHAT IS THIS? CRYPTIC SECTION -->
+<section class="what-is" id="about">
+  <div class="section-inner">
+    <div class="what-is-box">
+      <div class="riddle">
+        You send <span class="highlight-1">packets</span> into a pipe.<br>
+        The pipe has a limit.<br>
+        We help you find that <span class="highlight-2">limit</span>.<br>
+        <span style="color:var(--text-dim);font-size:0.7em">— Quickly.</span>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- CAPABILITIES -->
+<section class="section" id="capabilities">
+  <div class="section-inner">
+    <div class="section-label">Capabilities</div>
+    <h2 class="section-title">What's Under the Hood</h2>
+    <p class="section-desc">
+      A carefully engineered suite of network tools. 
+      No bloat. No unnecessary interfaces. Just raw, direct throughput generation.
+    </p>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🎯</div>
+        <div class="feature-text">
+          <h4>Targeted Stress</h4>
+          <p>Direct packet delivery to specific IP addresses. Full port sweep across all 65,535 endpoints in a single cycle.</p>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <div class="feature-text">
+          <h4>Variable Power</h4>
+          <p>Five configurable intensity levels — from gentle probing (KB/s) to full saturation (GB/s). You control the throttle.</p>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🌊</div>
+        <div class="feature-text">
+          <h4>Network Flood</h4>
+          <p>Distributed traffic generation across the local subnet. Coordinate multiple nodes for amplified throughput.</p>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔗</div>
+        <div class="feature-text">
+          <h4>Peer Mesh</h4>
+          <p>Auto-discovers other instances on the same network via UDP broadcast. No configuration needed — just run it.</p>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <div class="feature-text">
+          <h4>Real-Time Telemetry</h4>
+          <p>Live packet counters, bandwidth monitoring, data volume tracking, and connection statistics. Every byte accounted for.</p>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🛡️</div>
+        <div class="feature-text">
+          <h4>Platform Aware</h4>
+          <p>Auto-detects desktop vs. laptop hardware and adjusts output parameters accordingly. Thermal safety built in.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Terminal simulation -->
+    <div class="terminal-box">
+      <div class="terminal-header">
+        <span class="terminal-dot"></span>
+        <span class="terminal-dot"></span>
+        <span class="terminal-dot"></span>
+        <span class="terminal-title">xyzdos@engine:~</span>
+      </div>
+      <div class="terminal-body">
+        <div><span class="prompt">$</span> <span class="cmd">xyzdos --target 192.168.1.50 --power high --duration 30</span></div>
+        <div><span class="prompt">></span> <span class="output">Initializing 6 worker threads...</span></div>
+        <div><span class="prompt">></span> <span class="output">Sweeping 65,535 ports @ 800 MB/cycle</span></div>
+        <div><span class="prompt">></span> <span class="output" style="color:var(--green)">Running — 2.4 GB sent | 48,320 pkts/s | CTRL+C to abort</span></div>
+        <div class="cursor-line"><span class="prompt">$</span> <span class="blink-cursor"></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section" id="how-it-works">
+  <div class="section-inner">
+    <div class="section-label">Process</div>
+    <h2 class="section-title">How It Works</h2>
+    <p class="section-desc">
+      From purchase to deployment in minutes. No hoops, no gatekeeping.
+    </p>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-number"></div>
+        <h4>Join Discord</h4>
+        <p>Hop into our Discord server and message us about which tier and duration you want.</p>
+        <span class="step-arrow">→</span>
+      </div>
+      <div class="step-card">
+        <div class="step-number"></div>
+        <h4>Make Payment</h4>
+        <p>Pay through Discord. Once confirmed, you'll receive your unique product key instantly.</p>
+        <span class="step-arrow">→</span>
+      </div>
+      <div class="step-card">
+        <div class="step-number"></div>
+        <h4>Activate</h4>
+        <p>Download XYZDOS, launch it, and enter your key. HWID-locked to your machine — no sharing needed.</p>
+        <span class="step-arrow">→</span>
+      </div>
+      <div class="step-card">
+        <div class="step-number"></div>
+        <h4>Deploy</h4>
+        <p>Enter a target, set your power level, and strike. Real-time stats, live telemetry, full control.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SOCIAL PROOF -->
+<section class="section">
+  <div class="section-inner">
+    <div class="social-proof">
+      <h3>What People Are Saying</h3>
+      <div class="proof-grid">
+        <div class="proof-item">
+          <div class="quote">"I've run a lot of network tools. This one actually delivers. No bullshit, just results."</div>
+          <div class="author">— Network Engineer</div>
+        </div>
+        <div class="proof-item">
+          <div class="quote">"The peer mesh feature alone is worth it. Coordinating across multiple machines is seamless."</div>
+          <div class="author">— Infrastructure Lead</div>
+        </div>
+        <div class="proof-item">
+          <div class="quote">"Simple interface. Brutal output. It finds the cracks in your network fast."</div>
+          <div class="author">— Security Analyst</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="section" id="faq">
+  <div class="section-inner">
+    <div class="section-label">FAQ</div>
+    <h2 class="section-title">Common Questions</h2>
+    <p class="section-desc">
+      Everything you need to know before pulling the trigger.
+    </p>
+    <div class="faq-list">
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          What exactly is XYZDOS?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer"><p>XYZDOS is a high-density packet egress tool. You point it at an IP, it saturates the connection with traffic. Think of it as a pressure washer for networks.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          Do I need any technical knowledge?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer"><p>Basic networking knowledge helps (knowing what an IP address is), but the interface is designed to be straightforward. Enter target → set power → strike. That's it.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          How does HWID locking work?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer"><p>Each license key is bound to your machine's unique hardware ID. This means one key = one device. No account sharing, no transferring. If you need a different machine, you'll need to reset it in the Discord.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          What's the difference between Basic and Premium?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer"><p><strong>Basic</strong> gives you Power Levels 1-3 and Device Kill mode — enough to get started. <strong>Premium</strong> unlocks all Power Levels 1-5, Network Flood mode, and Peer Mesh networking for distributed attacks. Both get the same support.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          How do I pay and get my key?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer"><p>Everything runs through our <a href="https://discord.gg/Ek6MpFvJsN" target="_blank" style="color:var(--accent)">Discord server</a>. Message us, tell us what you want, pay, and we'll send your product key. Simple.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          Is this legal?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer"><p>Well what do you think dumbass.</p></div>
+      </div>
+    </div>
+    <div class="faq-cta">
+      Got more questions? <a href="https://discord.gg/Ek6MpFvJsN" target="_blank">Ask on Discord</a>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING - TWO TIERS -->
+<section class="section" id="pricing">
+  <div class="section-inner">
+    <div class="section-label">Pricing</div>
+    <h2 class="section-title">Choose Your Plan</h2>
+    <p class="section-desc">
+      Two tiers. Multiple durations. Full access either way.<br>
+      Pricing &amp; payment handled through Discord.
+    </p>
+
+    <div class="pricing-grid">
+      <!-- BASIC -->
+      <div class="pricing-card">
+        <div class="pricing-tier">Entry</div>
+        <div class="pricing-name">Basic</div>
+        <div class="pricing-divider"></div>
+        <ul class="pricing-features">
+          <li><span class="check">✓</span> Power Levels 1-3</li>
+          <li><span class="check">✓</span> Device Kill Mode</li>
+          <li><span class="check">✓</span> HWID Locked</li>
+          <li><span class="check">✓</span> Discord Support</li>
+          <li><span class="cross">✗</span> Network Flood</li>
+          <li><span class="cross">✗</span> Peer Mesh</li>
+        </ul>
+        <div class="pricing-divider"></div>
+        <div class="duration-options">
+          <div class="duration-option">
+            <span class="duration-label">2 Weeks</span>
+            <span class="duration-price">Discord</span>
+          </div>
+          <div class="duration-option">
+            <span class="duration-label">1 Month</span>
+            <span class="duration-price">Discord</span>
+          </div>
+          <div class="duration-option">
+            <span class="duration-label">Lifetime</span>
+            <span class="duration-price">TBD <span class="small">one-time</span></span>
+          </div>
+        </div>
+        <a href="https://discord.gg/Ek6MpFvJsN" target="_blank" class="pricing-btn">Purchase on Discord</a>
+      </div>
+
+      <!-- PREMIUM -->
+      <div class="pricing-card featured">
+        <div class="pricing-tier">Ultimate</div>
+        <div class="pricing-name">Premium</div>
+        <div class="pricing-divider"></div>
+        <ul class="pricing-features">
+          <li><span class="check">✓</span> All Power Levels 1-5</li>
+          <li><span class="check">✓</span> Device Kill Mode</li>
+          <li><span class="check">✓</span> Network Flood Mode</li>
+          <li><span class="check">✓</span> Peer Mesh Network</li>
+          <li><span class="check">✓</span> HWID Locked</li>
+          <li><span class="check">✓</span> Discord Support</li>
+          <li><span class="check">✓</span> Lifetime Updates</li>
+        </ul>
+        <div class="pricing-divider"></div>
+        <div class="duration-options">
+          <div class="duration-option">
+            <span class="duration-label">2 Weeks</span>
+            <span class="duration-price">Discord</span>
+          </div>
+          <div class="duration-option">
+            <span class="duration-label">1 Month</span>
+            <span class="duration-price">Discord</span>
+          </div>
+          <div class="duration-option">
+            <span class="duration-label">Lifetime</span>
+            <span class="duration-price">TBD <span class="small">one-time</span></span>
+          </div>
+        </div>
+        <a href="https://discord.gg/Ek6MpFvJsN" target="_blank" class="pricing-btn featured-btn">Purchase on Discord</a>
+      </div>
+    </div>
+
+    <div class="pricing-note">
+      All prices <strong style="color:var(--accent)">Discord</strong> — <a href="https://discord.gg/Ek6MpFvJsN" target="_blank">Join Discord</a> to purchase.
+    </div>
+  </div>
+</section>
+
+<!-- DISCORD CTA -->
+<section class="discord-cta">
+  <div class="discord-box">
+    <svg class="discord-icon-lg" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
+    </svg>
+    <h2>Get Pricing & Access</h2>
+    <p>
+      All purchases, inquiries, and support are handled through our Discord community.<br>
+      Join to get your product key, ask questions, or discuss custom deployment options.
+    </p>
+    <a href="https://discord.gg/Ek6MpFvJsN" target="_blank" class="discord-btn">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+      Join Discord Server
+    </a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <span class="footer-logo">XYZDOS v1.0.0</span>
+    <div class="footer-links">
+      <a href="#about">About</a>
+      <a href="#capabilities">Capabilities</a>
+      <a href="#pricing">Pricing</a>
+      <a href="https://discord.gg/Ek6MpFvJsN" target="_blank">Discord</a>
+    </div>
+
+  </div>
+</footer>
+
+<script>
+// Particles
+(function(){
+  var c=document.getElementById('particlesCanvas');
+  if(!c)return;
+  var ctx=c.getContext('2d');
+  var particles=[],mouse={x:null,y:null};
+  var w,h;
+
+  function resize(){
+    w=c.width=window.innerWidth;
+    h=c.height=window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize',resize);
+
+  var count=Math.min(80,Math.floor(w*h/15000));
+
+  for(var i=0;i<count;i++){
+    particles.push({
+      x:Math.random()*w,
+      y:Math.random()*h,
+      vx:(Math.random()-0.5)*0.3,
+      vy:(Math.random()-0.5)*0.3,
+      r:Math.random()*1.5+0.5,
+      a:Math.random()*0.4+0.1
+    });
+  }
+
+  document.addEventListener('mousemove',function(e){
+    mouse.x=e.clientX;
+    mouse.y=e.clientY;
+  });
+
+  function draw(){
+    ctx.clearRect(0,0,w,h);
+    for(var i=0;i<particles.length;i++){
+      var p=particles[i];
+      p.x+=p.vx;
+      p.y+=p.vy;
+      if(p.x<0||p.x>w)p.vx*=-1;
+      if(p.y<0||p.y>h)p.vy*=-1;
+
+      if(mouse.x!==null){
+        var dx=mouse.x-p.x,dy=mouse.y-p.y;
+        var dist=Math.sqrt(dx*dx+dy*dy);
+        if(dist<150){
+          p.x-=dx*0.005;
+          p.y-=dy*0.005;
+        }
+      }
+
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle='rgba(176,108,255,'+p.a+')';
+      ctx.fill();
+    }
+
+    for(var i=0;i<particles.length;i++){
+      for(var j=i+1;j<particles.length;j++){
+        var dx=particles[i].x-particles[j].x;
+        var dy=particles[i].y-particles[j].y;
+        var dist=Math.sqrt(dx*dx+dy*dy);
+        if(dist<120){
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x,particles[i].y);
+          ctx.lineTo(particles[j].x,particles[j].y);
+          ctx.strokeStyle='rgba(176,108,255,'+(0.06*(1-dist/120))+')';
+          ctx.lineWidth=0.5;
+          ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// Admin panel helpers
+var adminOverlay=null,adminDashboard=null;
+var adminPage=1,adminSearchQuery='';
+
+function showAdminLogin(){
+  if(!adminOverlay)adminOverlay=document.getElementById('adminOverlay');
+  adminOverlay.style.display='flex';
+  setTimeout(function(){document.getElementById('adminUser').focus();},100);
+}
+
+function hideAdminLogin(){
+  if(!adminOverlay)adminOverlay=document.getElementById('adminOverlay');
+  adminOverlay.style.display='none';
+  document.getElementById('adminError').textContent='';
+  document.getElementById('adminUser').value='';
+  document.getElementById('adminPass').value='';
+}
+
+function showAdminDashboard(){document.getElementById('adminDashboard').style.display='';}
+function hideAdminDashboard(){document.getElementById('adminDashboard').style.display='none';}
+
+// Admin login flow
+document.addEventListener('DOMContentLoaded',function(){
+  adminOverlay=document.getElementById('adminOverlay');
+  adminDashboard=document.getElementById('adminDashboard');
+  
+  // Hide overlays initially
+  adminOverlay.style.display='none';
+  adminDashboard.style.display='none';
+  
+  // Check URL hash for admin access
+  if(window.location.hash==='#admin'){
+    showAdminLogin();
+  }
+
+  // Key combo: Ctrl+Shift+A to open admin login
+  document.addEventListener('keydown',function(e){
+    if(e.ctrlKey&&e.shiftKey&&(e.key==='A'||e.key==='a')){
+      e.preventDefault();
+      if(adminDashboard.style.display!==''){
+        showAdminLogin();
+      }else{
+        hideAdminDashboard();
+      }
+    }
+    // Escape closes overlays
+    if(e.key==='Escape'){
+      hideAdminLogin();
+      hideAdminDashboard();
+    }
+  });
+  
+  // Admin login button
+  document.getElementById('adminLoginBtn').addEventListener('click',function(){adminDoLogin();});
+  document.getElementById('adminPass').addEventListener('keydown',function(e){if(e.key==='Enter')adminDoLogin();});
+  document.getElementById('adminUser').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('adminPass').focus();});
+  
+  // Admin close buttons
+  document.getElementById('adminCloseBtn').addEventListener('click',hideAdminLogin);
+  document.getElementById('adminDashCloseBtn').addEventListener('click',hideAdminDashboard);
+  document.getElementById('adminLogoutBtn').addEventListener('click',function(){adminDoLogout();});
+  
+  // Search & refresh
+  document.getElementById('adminSearchBtn').addEventListener('click',function(){adminSearchQuery=document.getElementById('adminSearch').value;adminPage=1;adminFetchLogs();});
+  document.getElementById('adminSearch').addEventListener('keydown',function(e){if(e.key==='Enter'){adminSearchQuery=this.value;adminPage=1;adminFetchLogs();}});
+  document.getElementById('adminRefreshBtn').addEventListener('click',function(){adminFetchLogs();adminFetchStats();});
+});
+
+async function adminDoLogin(){
+  var user=document.getElementById('adminUser').value;
+  var pass=document.getElementById('adminPass').value;
+  var err=document.getElementById('adminError');
+  if(!user||!pass){err.textContent='[!] Enter username and password';return;}
+  try{
+    var r=await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:user,password:pass})});
+    if(r.ok){
+      err.textContent='';
+      hideAdminLogin();
+      showAdminDashboard();
+      adminFetchLogs();
+      adminFetchStats();
+    }else{
+      err.textContent='[!] Invalid credentials';
+      document.getElementById('adminPass').value='';
+      document.getElementById('adminPass').focus();
+    }
+  }catch(e){err.textContent='[!] Connection error';}
+}
+
+async function adminDoLogout(){
+  try{
+    await fetch('/api/admin/logout',{method:'POST'});
+  }catch(e){}
+  hideAdminDashboard();
+}
+
+async function adminFetchLogs(){
+  var tbody=document.getElementById('adminLogBody');
+  tbody.innerHTML='<tr><td colspan="4" style="padding:40px;text-align:center;color:var(--text-dim)">Loading...</td></tr>';
+  try{
+    var url='/api/admin/visits?page='+adminPage+'&per_page=50';
+    if(adminSearchQuery)url+='&search='+encodeURIComponent(adminSearchQuery);
+    var r=await fetch(url);
+    if(!r.ok){tbody.innerHTML='<tr><td colspan="4" style="padding:40px;text-align:center;color:var(--red)">Unauthorized. Please login again.</td></tr>';return;}
+    var data=await r.json();
+    if(data.visits&&data.visits.length>0){
+      var html='';
+      var start=(data.page-1)*data.per_page+1;
+      for(var i=0;i<data.visits.length;i++){
+        var v=data.visits[i];
+        var idx=start+i;
+        var ua=v.user_agent||'';
+        if(ua.length>60)ua=ua.substring(0,60)+'...';
+        html+='<tr style="border-bottom:1px solid rgba(176,108,255,.04)">'+
+          '<td style="padding:10px 14px;color:var(--text-dim)">'+idx+'</td>'+
+          '<td style="padding:10px 14px;color:var(--accent);font-weight:700">'+escapeHtml(v.ip)+'</td>'+
+          '<td style="padding:10px 14px;color:var(--text-dim)">'+escapeHtml(v.time)+'</td>'+
+          '<td style="padding:10px 14px;color:var(--text-dim);font-size:10px">'+escapeHtml(ua)+'</td>'+
+        '</tr>';
+      }
+      tbody.innerHTML=html;
+      // Pagination
+      renderPagination(data);
+    }else{
+      tbody.innerHTML='<tr><td colspan="4" style="padding:40px;text-align:center;color:var(--text-dim)">No visitors yet'+(adminSearchQuery?' matching "'+escapeHtml(adminSearchQuery)+'"':'')+'.</td></tr>';
+      document.getElementById('adminPagination').innerHTML='';
+    }
+  }catch(e){
+    tbody.innerHTML='<tr><td colspan="4" style="padding:40px;text-align:center;color:var(--red)">Failed to load data.</td></tr>';
+  }
+}
+
+function renderPagination(data){
+  var p=document.getElementById('adminPagination');
+  var totalPages=Math.ceil(data.total/data.per_page);
+  if(totalPages<=1){p.innerHTML='';return;}
+  var html='';
+  if(adminPage>1)html+='<button onclick="adminPage='+(adminPage-1)+';adminFetchLogs();" style="padding:6px 12px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:4px;font-family:var(--font-mono);font-size:10px;color:var(--text-dim);cursor:pointer">‹ Prev</button>';
+  html+='<span style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim);padding:0 8px">Page '+adminPage+' of '+totalPages+' ('+data.total+' total)</span>';
+  if(adminPage<totalPages)html+='<button onclick="adminPage='+(adminPage+1)+';adminFetchLogs();" style="padding:6px 12px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:4px;font-family:var(--font-mono);font-size:10px;color:var(--text-dim);cursor:pointer">Next ›</button>';
+  p.innerHTML=html;
+}
+
+async function adminFetchStats(){
+  try{
+    var r=await fetch('/api/admin/stats');
+    if(!r.ok)return;
+    var data=await r.json();
+    document.getElementById('adminStatVisits').innerHTML='<span style="color:var(--accent);font-weight:700">'+data.total_visits+'</span> visits';
+    document.getElementById('adminStatUnique').innerHTML='<span style="color:var(--green);font-weight:700">'+data.unique_ips+'</span> unique';
+    document.getElementById('adminStatToday').innerHTML='<span style="color:var(--gold);font-weight:700">'+data.today_visits+'</span> today';
+  }catch(e){}
+}
+
+function escapeHtml(t){if(!t)return'';return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// Visitor logging on page load
+(function(){
+  try{
+    fetch('/api/log-visit',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({referer:document.referrer||'',page:window.location.pathname})
+    }).catch(function(){});
+  }catch(e){}
+})();
+
+// Navbar scroll effect
+(function(){
+  var nav=document.getElementById('navbar');
+  window.addEventListener('scroll',function(){
+    if(window.scrollY>50){
+      nav.classList.add('scrolled');
+    }else{
+      nav.classList.remove('scrolled');
+    }
+  });
+})();
+
+// FAQ toggle
+function toggleFaq(btn){
+  var item=btn.parentElement;
+  item.classList.toggle('open');
+}
+
+// Smooth scroll for anchor links
+(function(){
+  document.querySelectorAll('a[href^="#"]').forEach(function(a){
+    a.addEventListener('click',function(e){
+      var target=document.querySelector(this.getAttribute('href'));
+      if(target){
+        e.preventDefault();
+        target.scrollIntoView({behavior:'smooth'});
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>
